@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: flipkart-label-tool
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flipkart Label Tool</title>
+</head>
+<body>
+  <h2>Flipkart Order Label Processor</h2>
+
+  <label>Access Token:</label><br>
+  <input id="token" style="width: 300px;"><br><br>
+
+  <label>Upload FSN → SKU CSV:</label><br>
+  <input type="file" id="csv"><br><br>
+  <button onclick="uploadCSV()">Upload Mapping</button><br><br>
+
+  <button onclick="fetchOrders()">Fetch Orders</button><br><br>
+  <div id="orders"></div>
+
+  <script>
+    async function uploadCSV() {
+      const file = document.getElementById('csv').files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await fetch('/upload-mapping', {
+        method: 'POST',
+        body: formData,
+      });
+
+      alert('Mapping Uploaded');
+    }
+
+    async function fetchOrders() {
+      const token = document.getElementById('token').value;
+      const res = await fetch('/get-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token }),
+      });
+
+      const orders = await res.json();
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+
+      orders.forEach(order => {
+        const fsn = order.orderItems[0].listing.fsn;
+        const btn = document.createElement('button');
+        btn.innerText = `Download Label for ${order.orderId}`;
+        btn.onclick = () => downloadLabel(token, order.orderId, fsn);
+        container.appendChild(btn);
+        container.appendChild(document.createElement('br'));
+      });
+    }
+
+    async function downloadLabel(token, orderId, fsn) {
+      const res = await fetch('/process-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token, orderId, fsn }),
+      });
+
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${orderId}_label.pdf`;
+      link.click();
+    }
+  </script>
+</body>
+</html>

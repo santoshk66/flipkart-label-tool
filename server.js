@@ -28,11 +28,12 @@ app.post('/upload-mapping', upload.single('file'), (req, res) => {
 });
 
 app.post('/get-orders', async (req, res) => {
-  const { accessToken } = req.body;
+  const token = process.env.FLIPKART_ACCESS_TOKEN || req.body.accessToken;
+  if (!token) return res.status(401).json({ error: "Access token missing." });
 
   try {
     const response = await axios.get('https://api.flipkart.net/sellers/v3/orders', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
     res.json(response.data.items || []);
   } catch (err) {
@@ -41,10 +42,12 @@ app.post('/get-orders', async (req, res) => {
 });
 
 app.post('/process-label', async (req, res) => {
-  const { accessToken, orderId, fsn } = req.body;
+  const token = process.env.FLIPKART_ACCESS_TOKEN || req.body.accessToken;
+  const { orderId, fsn } = req.body;
+  if (!token) return res.status(401).json({ error: "Access token missing." });
   try {
     const labelRes = await axios.get(`https://api.flipkart.net/sellers/v3/orders/${orderId}/label`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${token}` },
       responseType: 'arraybuffer',
     });
 
